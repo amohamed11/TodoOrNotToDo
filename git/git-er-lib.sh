@@ -3,8 +3,16 @@
 __git_er_generate_todo_id() {
     local er_root=$1
     local category=$2
-    local count=$(ls "$er_root/todos" | grep -E "^${category}-" | wc -l)
-    echo "${category}-$(($count + 2))"
+
+    local highest_id=$(ls "$er_root/todos" | grep -E "^${category}-[0-9]+\.txt$" | \
+        sed -E "s/^${category}-([0-9]+)\.txt$/\1/" | \
+        sort -n | tail -n 1)
+
+    if [ -z "$highest_id" ]; then
+        echo "${category}-1"
+    else
+        echo "${category}-$((highest_id + 1))"
+    fi
 }
 
 __git_er_get_dir() {
@@ -36,10 +44,8 @@ __git_er_mark_incomplete() {
 
 __git_er_list_complete() {
     local er_root=$1
-    echo "Completed todos:"
     for todo_file in "$er_root/todos"/*-state.txt; do
-        local status=$(tail -n 1 "$todo_file")
-        if [ "$status" == "COMPLETE" ]; then
+        if [ "$(tail -n 1 "$todo_file")" == "COMPLETE" ]; then
             echo "$(basename "$todo_file" -state.txt)"
         fi
     done
@@ -47,11 +53,16 @@ __git_er_list_complete() {
 
 __git_er_list_incomplete() {
     local er_root=$1
-    echo "Incomplete todos:"
     for todo_file in "$er_root/todos"/*-state.txt; do
-        local status=$(tail -n 1 "$todo_file")
-        if [ "$status" == "INCOMPLETE" ]; then
+        if [ "$(tail -n 1 "$todo_file")" == "INCOMPLETE" ]; then
             echo "$(basename "$todo_file" -state.txt)"
         fi
+    done
+}
+
+__git_er_list() {
+    local er_root=$1
+    for todo_file in "$er_root/todos"/*-state.txt; do
+        echo "$(basename "$todo_file" -state.txt)"
     done
 }
