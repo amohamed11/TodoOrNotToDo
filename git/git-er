@@ -1,0 +1,5 @@
+#!/bin/bash
+
+ARG=$(git rev-parse --sq-quote "$@")
+CMD="git-er.sh $ARG"
+eval "$CMD"
